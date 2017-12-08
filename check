@@ -1,0 +1,99 @@
+#!/usr/bin/python2
+#-*- encoding:utf-8 -*-
+
+import os
+import re
+import sys
+import json
+import stat
+import argparse
+import subprocess
+
+need_compile = ['c']
+
+with open("check.txt", 'r') as f:
+    results = json.load(f)
+results = {int(n):m for n,m in results.items()}
+
+def flush_print(*s):
+    for n in s:
+        sys.stdout.write(str(n))
+    sys.stdout.flush()
+
+def test_progs(lang, skip):
+    flush_print("Checking ",lang," programs:\n")
+    script_directory = os.path.dirname( os.path.realpath(__file__) )
+    files_directory = os.path.join( script_directory,lang )
+
+    if lang in need_compile:
+        flush_print("Running make.\n")
+        subprocess.call(['make', '-C', files_directory])
+    
+    files = os.listdir(files_directory)
+
+    missing = set(range(1,max(results)+1))
+    for f in sorted(files):
+        match = re.match(r'^p([0-9]+)_([0-9a-z_-]+).*$',f)
+        if match is None:
+            continue
+
+        if not os.stat(os.path.join(files_directory, f)).st_mode & (stat.S_IXUSR|stat.S_IXGRP|stat.S_IXOTH):
+            continue
+    
+        number = int(match.group(1))
+        name = match.group(2).replace('_',' ').capitalize()
+        if number not in results:
+            break
+        missing.remove(int(number))
+        if number in skip:
+            flush_print("  Skipping: ",name, ' (',number,')\n')
+            continue
+        
+        flush_print("  Testing: ",name,' (',number,')')
+        out = subprocess.check_output(os.path.join(files_directory,f),shell=True)
+        result,time = out.split()
+        if results[number] == int(result):
+            flush_print(' ok - time: ',time,'\n')
+        else:
+            flush_print(' error - time: ',time,' ')
+            flush_print('(got ',result,' but expected ',results[number],')\n')
+            break
+
+    if missing:
+        flush_print("Missing numbers: ")
+        for n in missing:
+            flush_print(n,' ')
+        flush_print('\n')
+
+def main():
+    skip = set([])
+
+    arg_pars = argparse.ArgumentParser(
+        description = "Check Euler solutions."
+    )
+    arg_pars.add_argument(
+        'languages',
+        nargs='*',
+        help="None or more. If none, exit doing nothing.",
+        default=[]
+    )
+    arg_pars.add_argument(
+        '--skip',
+        nargs='+',
+        help="Example: --skip 9-19 45 20",
+        default=[]
+    )
+    args = arg_pars.parse_args()
+
+    for rang in args.skip:
+        if '-' in rang:
+            a,b = rang.split('-')
+            skip = skip.union(range(int(a),int(b)+1))
+        else:
+            skip = skip.add(int(rang))
+
+    for prog in args.languages:
+        test_progs(prog.lower(), skip)
+
+if __name__ == '__main__':
+    main()
