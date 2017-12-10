@@ -1,4 +1,5 @@
 #include "euler.h"
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -45,34 +46,51 @@ static int permute(char* str, int len) {
   return 1;
 }
 
-static int numbers_one_to_n_str(int n, char *str) {
-  for (int i=n; i>0; i--) {
-    
+static NUM_TYPE to_num(char string[], int size) {
+  int result = 0;
+  for (int i=0; i<size; i++) {
+    result = result*10 + (string[i]-'0');
   }
+  return result;
+}
+
+static NUM_TYPE n_pandigital(int n) {
+  char elements[n+1];
+  char limit[n+1];
+  for (int i=0; i<n; i++) {
+    elements[i] = '0'+(i+1);
+  }
+  for (int i=0; i<n; i++) {
+    limit[i] = '0'+(n-i);
+  }
+  elements[n] = limit[n] = 0;
+
+  NUM_TYPE max = 0;
+  while (true) {
+    NUM_TYPE number = to_num(elements, n);
+    
+    if (is_prime(number)) {
+      if (number > max) {
+	max = number;
+      }
+    }
+    
+    permute(elements, n);
+    if (strcmp(elements, limit) == 0) break;
+  }
+
+  return max;
 }
 
 static int run(void) {
-  NUM_TYPE result = 0;
-
-  for (int n = 9; n > 0; n--) {
-    char numstr[10];
-    char original_numstr[10];
-    int numstrlen;
-    
-    numstrlen = numbers_one_to_n_str(n, numstr);
-    strcpy(original_numstr, numstr);
-    
-    do {
-      NUM_TYPE number = atol(numstr);
-      if (number > result && is_prime(number)) {
-	result = number;
-      }
-      
-      permute(numstr, numstrlen);
-    } while (strcmp(original_numstr, numstr) != 0)
+  for (int i=9; i>0; i--) {
+    NUM_TYPE result = n_pandigital(i);
+    if (result != 0) {
+      printf("%"NUM_TYPE_PRINTF"\n", result);
+      break;
+    }
   }
   
-  printf("%"NUM_TYPE_PRINTF"\n", result);
   return 0;
 }
 
