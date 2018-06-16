@@ -24,21 +24,21 @@ void swap(char* s, int a, int b) {
 int permute(char* str, int len) {
   int key = len-1;
   int newkey = len-1;
-  
+
   while ((key > 0) && (str[key] <= str[key-1]))
     key--;
   key--;
-  
+
   if (key < 0)
     return 0;
-  
+
   newkey = len-1;
   while ((newkey > key) && (str[newkey] <= str[key])){
     newkey--;
   }
-  
+
   swap(str,key,newkey);
-  
+
   len--;
   key++;
   while(len>key){
@@ -46,7 +46,7 @@ int permute(char* str, int len) {
     key++;
     len--;
   }
-  
+
   return 1;
 }
 
@@ -54,7 +54,7 @@ static int run(void) {
   char elements[] = "0123456789";
   int count = 0;
   while (++count < 1000000) permute(elements, 10);
-  printf(elements);
+  printf("%s", elements);
   printf("\n");
   return 0;
 }
