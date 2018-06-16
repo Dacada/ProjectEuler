@@ -11,73 +11,40 @@
  * What is the largest n-digit pandigital prime that exists?
  */
 
-static void swap(char* s, int a, int b) {
-  char temp = s[a];
-  s[a] = s[b];
-  s[b] = temp;
-}
-
-static int permute(char* str, int len) {
-  int key = len-1;
-  int newkey = len-1;
-  
-  while ((key > 0) && (str[key] <= str[key-1]))
-    key--;
-  key--;
-  
-  if (key < 0)
-    return 0;
-  
-  newkey = len-1;
-  while ((newkey > key) && (str[newkey] <= str[key])){
-    newkey--;
-  }
-  
-  swap(str,key,newkey);
-  
-  len--;
-  key++;
-  while(len>key){
-    swap(str,len,key);
-    key++;
-    len--;
-  }
-  
-  return 1;
-}
-
-static NUM_TYPE to_num(char string[], int size) {
+static NUM_TYPE to_num(void **string, int size) {
   int result = 0;
   for (int i=0; i<size; i++) {
-    result = result*10 + (string[i]-'0');
+    result = result*10 + (*(char*)string[i]-'0');
   }
   return result;
 }
 
 static NUM_TYPE n_pandigital(int n) {
-  char elements[n+1];
-  char limit[n+1];
+  char elements[n];
   for (int i=0; i<n; i++) {
     elements[i] = '0'+(i+1);
   }
-  for (int i=0; i<n; i++) {
-    limit[i] = '0'+(n-i);
-  }
-  elements[n] = limit[n] = 0;
 
+  void *elements_void[n];
+  for (int i=0; i<n; i++) {
+    elements_void[i] = (void*)elements+i;
+  }
+
+  permutation_enumerator_t *e = permutation_enumerator_new(elements_void, n);
+
+  void **permutated_elements;
   NUM_TYPE max = 0;
-  while (true) {
-    NUM_TYPE number = to_num(elements, n);
-    
+  while ((permutated_elements = permutation_enumerator_next(e)) != NULL) {
+    NUM_TYPE number = to_num(permutated_elements, n);
+
     if (is_prime(number)) {
       if (number > max) {
-	max = number;
+	      max = number;
       }
     }
-    
-    permute(elements, n);
-    if (strcmp(elements, limit) == 0) break;
+    free(permutated_elements);
   }
+  permutation_enumerator_free(e);
 
   return max;
 }
@@ -90,7 +57,7 @@ static int run(void) {
       break;
     }
   }
-  
+
   return 0;
 }
 
