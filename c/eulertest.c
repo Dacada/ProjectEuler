@@ -4,18 +4,34 @@
 
 #include "euler.h"
 #include <unistd.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 //#define DO_NOT_WAIT
 //#define DO_NOT_CURL
+//#define DO_NOT_FACTOR
 
 int wait_three_seconds(void) {
   #ifndef DO_NOT_WAIT
   sleep(3);
   #endif
-  
+
   return 33;
+}
+
+void perm_must_equal(void **e, char *expected) {
+  char generated[5];
+  generated[0] = *(char*)e[0];
+  generated[1] = *(char*)e[1];
+  generated[2] = *(char*)e[2];
+  generated[3] = *(char*)e[3];
+  generated[4] = 0;
+  if (strcmp(generated, expected) != 0) {
+    printf("Error: permutation generator made '%s' but '%s' was expected\n",
+           generated, expected);
+    exit(EXIT_FAILURE);
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -66,11 +82,14 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  free(factors);
+
   if ((n = gcd(1008, 1638)) != 126) {
     printf("Error: gcd(1008,1638) should be 126 but got %"NUM_TYPE_PRINTF".\n", n);
     return EXIT_FAILURE;
   }
 
+  #ifndef DO_NOT_FACTOR
   // Just make sure it doesn't crash and burn
   for (int i=0; i<3000; i++) {
     factors = factorize(3298458948, &count);
@@ -80,6 +99,8 @@ int main(int argc, char *argv[]) {
       break;
     }
   }
+  free(factors);
+  #endif
 
   NUM_TYPE *primes = primes_sieve(30, &count);
   if (primes[0] != 2 ||
@@ -99,7 +120,7 @@ int main(int argc, char *argv[]) {
   #ifndef DO_NOT_CURL
   char *text = read_url("http://example.com");
   printf("This should look like an HTML document:\n\n");
-  printf(text);
+  printf("%s", text);
   free(text);
 
   text = read_url("https://projecteuler.net/project/resources/p022_names.txt");
@@ -112,21 +133,21 @@ int main(int argc, char *argv[]) {
     printf("Error: sum_divisors(56) should be 64 but was %"NUM_TYPE_PRINTF"\n", n);
     return EXIT_FAILURE;
   }
-  
+
   hash_table_t *ht = hash_table_new(100, 3, 31);
-  
+
   if (hash_table_put(ht, 91, 0) == -1)
     perror("hash_table_put0");
   NUM_TYPE result = hash_table_get(ht, 91);
   if (result != 0) {
     printf("Error: hash_table_get should've been 0 but was %"NUM_TYPE_PRINTF"\n", result);
   }
-  
+
   result = hash_table_get(ht, 10);
   if (result != 31) {
     printf("Error: hash_table_get should've been 31 but was %"NUM_TYPE_PRINTF"\n", result);
   }
-  
+
   if (hash_table_put(ht, 63, 111) == -1)
     perror("hash_table_put1");
   if (hash_table_put(ht, 28, 222) == -1)
@@ -135,7 +156,7 @@ int main(int argc, char *argv[]) {
     perror("hash_table_put3");
   if (hash_table_put(ht, 263, 555) == -1)
     perror("hash_table_put4");
-  
+
   result = hash_table_get(ht, 63);
   if (result != 111) {
     printf("Error: hash_table_get should've been 111 but was %"NUM_TYPE_PRINTF"\n", result);
@@ -160,8 +181,47 @@ int main(int argc, char *argv[]) {
   if (result != 31) {
     printf("Error: hash_table_get should've been 31 but was %"NUM_TYPE_PRINTF"\n", result);
   }
-  
+
   hash_table_free(ht);
+
+  char *char_array = "abcd";
+  void *array[4];
+  array[0] = (void*)char_array;
+  array[1] = (void*)(char_array+1);
+  array[2] = (void*)(char_array+2);
+  array[3] = (void*)(char_array+3);
+  permutation_enumerator_t *e = permutation_enumerator_new(array, 4);
+  void **enumeration;
+  int i = 0;
+  while ((enumeration = permutation_enumerator_next(e)) != NULL) {
+    if (i == 0) perm_must_equal(enumeration, "abcd");
+    else if (i == 1) perm_must_equal(enumeration, "bacd");
+    else if (i == 2) perm_must_equal(enumeration, "cabd");
+    else if (i == 3) perm_must_equal(enumeration, "acbd");
+    else if (i == 4) perm_must_equal(enumeration, "bcad");
+    else if (i == 5) perm_must_equal(enumeration, "cbad");
+    else if (i == 6) perm_must_equal(enumeration, "dbac");
+    else if (i == 7) perm_must_equal(enumeration, "bdac");
+    else if (i == 8) perm_must_equal(enumeration, "adbc");
+    else if (i == 9) perm_must_equal(enumeration, "dabc");
+    else if (i == 10) perm_must_equal(enumeration, "badc");
+    else if (i == 11) perm_must_equal(enumeration, "abdc");
+    else if (i == 12) perm_must_equal(enumeration, "acdb");
+    else if (i == 13) perm_must_equal(enumeration, "cadb");
+    else if (i == 14) perm_must_equal(enumeration, "dacb");
+    else if (i == 15) perm_must_equal(enumeration, "adcb");
+    else if (i == 16) perm_must_equal(enumeration, "cdab");
+    else if (i == 17) perm_must_equal(enumeration, "dcab");
+    else if (i == 18) perm_must_equal(enumeration, "dcba");
+    else if (i == 19) perm_must_equal(enumeration, "cdba");
+    else if (i == 20) perm_must_equal(enumeration, "bdca");
+    else if (i == 21) perm_must_equal(enumeration, "dbca");
+    else if (i == 22) perm_must_equal(enumeration, "cbda");
+    else if (i == 23) perm_must_equal(enumeration, "bcda");
+    i++;
+    free(enumeration);
+  }
+  permutation_enumerator_free(e);
 
   printf("All checks pass.\n");
   return EXIT_SUCCESS;

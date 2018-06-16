@@ -46,13 +46,13 @@ size_t sorted_array_count_remove_dups(
        NUM_TYPE *array_no_dups, NUM_TYPE *array_count_dups) {
 
   if (count <= 0) return -1;
-  
+
   size_t result_i = 1;
   size_t counts_i = 0;
   NUM_TYPE last_n = array[0];
   array_no_dups[0] = last_n;
   array_count_dups[0] = 1;
-  
+
   for (size_t i=1; i<count; i++) {
     NUM_TYPE n = array[i];
     if (n == last_n) {
@@ -75,7 +75,7 @@ int time_wrapper(int (fun)(void)) {
 
   double time_difference = (double)(te.tv_nsec - ts.tv_nsec) / 1000000000.0;
   time_difference += (double)(te.tv_sec - ts.tv_sec);
-  
+
   if (printf("%f\n", time_difference) < 0) {
     return 1;
   }
@@ -88,7 +88,7 @@ NUM_TYPE *factorize(NUM_TYPE n, size_t *count) {
   if (pipe(pipefd) == -1) goto error;
 
   pid_t pid = fork();
-  
+
   if (pid == 0) { // child process
     char n_str[50];
     if (sprintf(n_str, "%"NUM_TYPE_PRINTF, n) == -1) goto child_error;
@@ -96,9 +96,9 @@ NUM_TYPE *factorize(NUM_TYPE n, size_t *count) {
     if (close(pipefd[0] == -1)) goto child_error;
     if (dup2(pipefd[1], 1) == -1) goto child_error;
     if (close(pipefd[1]) == -1) goto child_error;
-  
+
     if (execlp("factor", "factor", n_str, NULL) == -1) goto child_error;
-    
+
   } else if (pid == -1) {
     goto error;
   } else { // parent process
@@ -117,7 +117,7 @@ NUM_TYPE *factorize(NUM_TYPE n, size_t *count) {
     ssize_t read_ret;
     while ((read_ret = read(pipefd[0], buffer, sizeof(buffer))) != 0) {
       if (read_ret == -1) goto error;
-      
+
       for (size_t i=0; i<1024; i++) {
 	char c = buffer[i];
 	if (found_colon) {
@@ -155,7 +155,7 @@ NUM_TYPE *factorize(NUM_TYPE n, size_t *count) {
       errno = exit_status;
       goto error;
     }
-    
+
     close(pipefd[0]);
     *count = result_i;
     return result;
@@ -174,7 +174,7 @@ static NUM_TYPE modmul(NUM_TYPE a, NUM_TYPE b, NUM_TYPE modulus) {
   if (modulus == 0) return a*b;
 
   NUM_TYPE r = 0;
-  
+
   if (a > 0) {
     if (a & 1) {
       if ((r += b) > modulus) r %= modulus;
@@ -207,7 +207,7 @@ bool is_prime(NUM_TYPE n) {
     srand(time(NULL));
     first_time = false;
   }
-  
+
   if (n < 2) return false;
   else if (n == 2) return true;
   else if (n % 2 == 0) return false;
@@ -244,9 +244,9 @@ bool is_prime(NUM_TYPE n) {
 
 bool is_prime(NUM_TYPE n) {
   if (n < 2) return false;
-  
+
   NUM_TYPE limit = (NUM_TYPE)sqrt((double)n);
-  
+
   for (size_t i=2; i<=limit; i++) {
     if (n % i == 0) {
       return false;
@@ -278,12 +278,12 @@ NUM_TYPE *primes_sieve(NUM_TYPE limit, size_t *count) {
     *count = -1;
     return NULL;
   }
-  
+
   for (NUM_TYPE i=2; i<limit; i++) {
     if (sieve[i]) {
       result[result_i++] = i;
       *count = *count + 1;
-      
+
       for (NUM_TYPE j=i*2; j<limit; j+=i) {
 	sieve[j] = false;
       }
@@ -313,7 +313,7 @@ char *read_url(char url[]) {
     } else {
       return read_data;
     }
-    
+
   } else {
     return NULL;
   }
@@ -336,7 +336,7 @@ NUM_TYPE sum_divisors(NUM_TYPE n) {
   for (size_t i=0; i<count_no_dups; i++) {
     NUM_TYPE p = factors_no_dups[i];
     NUM_TYPE a = factors_count_dups[i];
-    
+
     NUM_TYPE s = 0;
     for (NUM_TYPE ai=0; ai<=a; ai++) {
       s += (NUM_TYPE)pow((double)p, (double)ai);
@@ -391,7 +391,7 @@ NUM_TYPE hash_table_get(hash_table_t *hashtable, NUM_TYPE index) {
       }
     }
   }
-  
+
   return hashtable->error_return;
 }
 
@@ -399,14 +399,14 @@ int hash_table_put(hash_table_t *hashtable, NUM_TYPE index, NUM_TYPE value) {
   hash_table_bucket_t *bucket;
   size_t hashed_index = hash_table_hash(index, hashtable->total_buckets);
   bucket = hashtable->buckets[hashed_index];
-  
+
   if (bucket == NULL) {
     bucket = malloc(sizeof(hash_table_bucket_t));
     if (bucket == NULL) goto error;
     bucket->allocated_size = 0;
     hashtable->buckets[hashed_index] = bucket;
   }
-  
+
   if (bucket->allocated_size == 0) {
     bucket->allocated_size = hashtable->bucket_increase;
     bucket->next_value = 0;
@@ -430,4 +430,93 @@ int hash_table_put(hash_table_t *hashtable, NUM_TYPE index, NUM_TYPE value) {
 
  error:
   return -1;
+}
+
+permutation_enumerator_t *permutation_enumerator_new(
+                          void *const *const array,
+                          size_t array_len) {
+  permutation_enumerator_t *e = NULL;
+  e = malloc(sizeof(permutation_enumerator_t));
+  if (e == NULL) {
+    goto bail;
+  }
+
+  e->array = malloc(sizeof(void*)*array_len);
+  if (e->array == NULL){
+    goto bail;
+  }
+  memcpy(e->array, array, array_len*sizeof(void*));
+
+  e->i = 0;
+  e->array_len = array_len;
+
+  e->c = malloc(sizeof(size_t)*array_len);
+  if (e->c == NULL) {
+    goto bail;
+  }
+  for (size_t i=0; i<array_len; i++) {
+    e->c[i] = 0;
+  }
+
+  e->first = true;
+
+  return e;
+
+  bail:
+  if (e != NULL) {
+    free(e->array);
+    free(e->c);
+  }
+  free(e);
+  return NULL;
+}
+
+static void swap(void **array, size_t i1, size_t i2) {
+  void *tmp = array[i1];
+  array[i1] = array[i2];
+  array[i2] = tmp;
+}
+
+void **permutation_enumerator_next(permutation_enumerator_t *const e) {
+  if (e->first) {
+    e->first = false;
+    void **r = malloc(sizeof(void*)*e->array_len);
+    if (r == NULL) return NULL;
+    memcpy(r, e->array, e->array_len*sizeof(void*));
+    return r;
+  }
+
+  if (e->i >= e->array_len) {
+    return NULL;
+  }
+
+  while (e->c[e->i] >= e->i) {
+    e->c[e->i] = 0;
+    e->i++;
+  }
+
+  if (e->i >= e->array_len) {
+    return NULL;
+  }
+
+  if (e->i % 2 == 0) {
+    swap(e->array, 0, e->i);
+  } else {
+    swap(e->array, e->c[e->i], e->i);
+  }
+
+  e->c[e->i]++;
+  e->i = 0;
+
+  void **r = malloc(sizeof(void*)*e->array_len);
+  if (r == NULL) return NULL;
+  memcpy(r, e->array, e->array_len*sizeof(void*));
+  return r;
+}
+
+void permutation_enumerator_free(permutation_enumerator_t *const e) {
+  if (e == NULL) return;
+  free(e->c);
+  free(e->array);
+  free(e);
 }

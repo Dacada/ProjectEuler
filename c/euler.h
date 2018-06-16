@@ -119,4 +119,31 @@ int hash_table_put(hash_table_t *hashtable, NUM_TYPE index, NUM_TYPE value);
 
 // hash_table_remove: hashtable,index -> value
 
+
+typedef struct {
+  void **array;
+  size_t i, array_len, *c;
+  bool first;
+} permutation_enumerator_t;
+
+/*
+ * Create a new enumerator object used to iterate over every permutation of the
+ * given array (given as pointer to firstm element, which in turn is pointer to
+ * void)
+ */
+ permutation_enumerator_t *permutation_enumerator_new(
+                           void *const *const array,
+                           size_t array_len);
+
+/*
+ * Get the next permutation in the given enumerator or null if enumerator has
+ * ran out.
+ */
+void **permutation_enumerator_next(permutation_enumerator_t *const e);
+
+/*
+ * Free space used by a pandigital enumerator.
+ */
+void permutation_enumerator_free(permutation_enumerator_t *const e);
+
 #endif
