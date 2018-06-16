@@ -19,45 +19,10 @@
  * to only include it once in your sum.
  */
 
-static void swap(char* s, int a, int b) {
-  char temp = s[a];
-  s[a] = s[b];
-  s[b] = temp;
-}
-
-static int permute(char* str, int len) {
-  int key = len-1;
-  int newkey = len-1;
-  
-  while ((key > 0) && (str[key] <= str[key-1]))
-    key--;
-  key--;
-  
-  if (key < 0)
-    return 0;
-  
-  newkey = len-1;
-  while ((newkey > key) && (str[newkey] <= str[key])){
-    newkey--;
-  }
-  
-  swap(str,key,newkey);
-  
-  len--;
-  key++;
-  while(len>key){
-    swap(str,len,key);
-    key++;
-    len--;
-  }
-  
-  return 1;
-}
-
-static int to_int(char string[], int start, int end) {
+static int to_int(void *char_array[], int start, int end) {
   int result = 0;
   for (int i=start; i<end; i++) {
-    result = result*10 + (string[i]-'0');
+    result = result*10 + (*(char*)char_array[i]-'0');
   }
   return result;
 }
@@ -69,27 +34,33 @@ static int run(void) {
   bool numbers[maxnum];
 
   for (int i=0; i<maxnum; i++) numbers[i] = false;
-  
-  while (true) {
-    permute(elements, 9);
-    if (strcmp(elements, "987654321") == 0) break;
 
+  void *elements_void[9];
+  for (int i=0; i<9; i++) {
+    elements_void[i] = (void*)elements+i;
+  }
+
+  void **permutation;
+  permutation_enumerator_t *e = permutation_enumerator_new(elements_void, 9);
+  while ((permutation = permutation_enumerator_next(e)) != NULL) {
     for (int i = 1; i <= 7; i++) {
       for (int j = i+1; j <= 8; j++) {
-	int a = to_int(elements,0,i);
-	int b = to_int(elements,i,j);
-	int c = to_int(elements,j,9);
-	if (a * b == c) {
-	  numbers[c] = true;
-	}
+	      int a = to_int(permutation,0,i);
+	      int b = to_int(permutation,i,j);
+	      int c = to_int(permutation,j,9);
+	      if (a * b == c) {
+	       numbers[c] = true;
+	      }
       }
     }
+    free(permutation);
   }
+  permutation_enumerator_free(e);
 
   for (int i=1; i<maxnum; i++) {
     if (numbers[i]) result += i;
   }
-  
+
   printf("%"NUM_TYPE_PRINTF"\n", result);
   return 0;
 }
