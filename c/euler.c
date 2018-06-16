@@ -490,7 +490,7 @@ void **permutation_enumerator_next(permutation_enumerator_t *const e) {
     return NULL;
   }
 
-  while (e->c[e->i] >= e->i) {
+  while (e->i < e->array_len && e->c[e->i] >= e->i) {
     e->c[e->i] = 0;
     e->i++;
   }
