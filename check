@@ -9,7 +9,7 @@ import stat
 import argparse
 import subprocess
 
-need_compile = ['c']
+need_compile = ['c', 'csharp']
 
 with open("check.txt", 'r') as f:
     results = json.load(f)
@@ -28,7 +28,7 @@ def test_progs(lang, skip):
     if lang in need_compile:
         flush_print("Running make.\n")
         subprocess.call(['make', '-C', files_directory])
-    
+
     files = os.listdir(files_directory)
 
     missing = set(range(1,max(results)+1))
@@ -39,7 +39,7 @@ def test_progs(lang, skip):
 
         if not os.stat(os.path.join(files_directory, f)).st_mode & (stat.S_IXUSR|stat.S_IXGRP|stat.S_IXOTH):
             continue
-    
+
         number = int(match.group(1))
         name = match.group(2).replace('_',' ').capitalize()
         if number not in results:
@@ -48,7 +48,7 @@ def test_progs(lang, skip):
         if number in skip:
             flush_print("  Skipping: ",name, ' (',number,')\n')
             continue
-        
+
         flush_print("  Testing: ",name,' (',number,')')
         out = subprocess.check_output(os.path.join(files_directory,f),shell=True)
         result,time = out.split()
